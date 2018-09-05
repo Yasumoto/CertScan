@@ -16,7 +16,7 @@ guard args.count == 2, let certPrefix = args.popLast() else {
 }
 
 let client = Iam()
-let request = Iam.ListServerCertificatesRequest(marker: certPrefix, maxItems: nil, pathPrefix: nil)
+let request = Iam.ListServerCertificatesRequest(marker: nil, maxItems: nil, pathPrefix: nil)
 
 let response = try client.listServerCertificates(request)
 for cert in response.serverCertificateMetadataList {
