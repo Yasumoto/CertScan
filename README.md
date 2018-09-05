@@ -1,3 +1,3 @@
 # CertScan
 
-A description of this package.
+Search AWS resources for all resources that use a given certificate.
