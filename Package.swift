@@ -12,7 +12,7 @@ let package = Package(
     targets: [
         .target(
             name: "CertScan",
-            dependencies: ["Iam", "NIOOpenSSL"]),
+            dependencies: ["Cloudfront", "Elasticloadbalancing", "Elasticloadbalancingv2",  "Iam", "NIOOpenSSL"]),
         .testTarget(
             name: "CertScanTests",
             dependencies: ["CertScan"]),
