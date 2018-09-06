@@ -28,12 +28,23 @@ let response = try client.listServerCertificates(request)
 for cert in response.serverCertificateMetadataList {
     let getCertificateRequest = Iam.GetServerCertificateRequest(serverCertificateName: cert.serverCertificateName)
     let getCertificateResponse = try client.getServerCertificate(getCertificateRequest)
-    let body = getCertificateResponse.serverCertificate.certificateBody
-    if let byteBody = body.cString(using: .utf8), let serverCertificate = try? OpenSSLCertificate(buffer:
-        byteBody, format: .pem) {
-        print("The certificate is: \(cert.serverCertificateName)")
-        print(serverCertificate)
-        print("The same as what we look for: \(serverCertificate == searchCertificate)")
+    var body = getCertificateResponse.serverCertificate.certificateBody
+    if body.range(of: "-----BEGIN CERTIFICATE-----\n") == nil {
+        body = body.replacingOccurrences(of: "-----BEGIN CERTIFICATE-----", with: "-----BEGIN CERTIFICATE-----\n")
+    }
+    if body.range(of: "-----END CERTIFICATE-----\n") == nil {
+        body = body.replacingOccurrences(of: "-----END CERTIFICATE-----", with: "\n-----END CERTIFICATE-----")
+    }
+    var bodyUnsignedData: [UInt8] = Array(body.utf8)
+    bodyUnsignedData.append(0)
+    let bodyData: [Int8] = bodyUnsignedData.map { Int8(bitPattern: $0) }
+    do {
+        let serverCertificate = try OpenSSLCertificate(buffer: bodyData, format: .pem)
+        if serverCertificate == searchCertificate {
+            print("The certificate is: \(cert.serverCertificateName)")
+        }
+    } catch {
+        print("Could not parse \(cert.serverCertificateName): \(error)")
     }
 }
 
