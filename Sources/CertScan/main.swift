@@ -1,6 +1,6 @@
 import Foundation
 
-//import Cloudfront
+import Cloudfront
 import Elasticloadbalancing
 import Iam
 import NIOOpenSSL
@@ -45,6 +45,7 @@ func findIamCertificate(_ desiredCertificate: OpenSSLCertificate) throws -> Stri
             let serverCertificate = try OpenSSLCertificate(buffer: bodyData, format: .pem)
             if serverCertificate == searchCertificate {
                 print("The matching certificate is: \(cert.serverCertificateName)")
+                print("Path is: \(cert.path)")
                 return cert.arn
             }
         } catch {
@@ -55,13 +56,15 @@ func findIamCertificate(_ desiredCertificate: OpenSSLCertificate) throws -> Stri
 }
 
 func searchAllLoadBalancers(matchingArn: String) throws -> [String] {
-    var matches = [String]()
     let client = Elasticloadbalancing()
 
     func sendRequest(marker: String? = nil) throws -> [String] {
         var matches = [String]()
         let request = Elasticloadbalancing.DescribeAccessPointsInput(marker: nil, loadBalancerNames: nil, pageSize: nil)
         let response = try client.describeLoadBalancers(request)
+        if let marker = response.nextMarker {
+            print("Guess what, you better handle retries: \(marker)")
+        }
         for loadBalancer in response.loadBalancerDescriptions ?? [] {
             for listener in loadBalancer.listenerDescriptions ?? [] {
                 if let certificateArn = listener.listener?.sSLCertificateId {
@@ -82,17 +85,36 @@ func searchAllLoadBalancers(matchingArn: String) throws -> [String] {
         }
         return matches
     }
+    return try sendRequest()
+}
+
+func searchAllDistributions(matchingArn: String) throws -> [String] {
+    let client = Cloudfront()
+    let response = try client.listDistributions(Cloudfront.ListDistributionsRequest())
+    var matches = [String]()
+    if let distributionList = response.distributionList?.items?.distributionSummary {
+        for distribution in distributionList {
+            if let certARN = distribution.viewerCertificate.iAMCertificateId {
+                if matchingArn == certARN {
+                    print("Found a matching CloudFront distribution!")
+                    print("ARN: \(distribution.arn)")
+                    print("Domain Name: \(distribution.domainName)")
+                    print("ID: \(distribution.id)")
+                    matches.append(distribution.id)
+                }
+            }
+        }
+    }
     return matches
 }
+
 
 guard let arn = try findIamCertificate(searchCertificate) else {
     print("Could not find matching IAM certificate!")
     exit(1)
 }
-
-
+let distributions = try searchAllDistributions(matchingArn: arn)
 let elbs = try searchAllLoadBalancers(matchingArn: arn)
-
-for elb in elbs {
-    print(elb)
+if elbs.isEmpty {
+    print("Good news! No ELBs to update.")
 }

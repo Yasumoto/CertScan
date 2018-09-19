@@ -6,7 +6,7 @@
         "repositoryURL": "https://github.com/swift-aws/aws-sdk-swift",
         "state": {
           "branch": "jmsmith-multiple-targets",
-          "revision": "956e952954b16dc5d1b66b41605f31875ff89abc",
+          "revision": "20cae86fc5ee3eeaa4d57c4725a5da2ae077faba",
           "version": null
         }
       },
@@ -14,9 +14,9 @@
         "package": "AWSSDKSwiftCore",
         "repositoryURL": "https://github.com/swift-aws/aws-sdk-swift-core.git",
         "state": {
-          "branch": null,
-          "revision": "e2dbc23ec5938e658ccee4d9056a0d5a93a8c16d",
-          "version": "2.0.0-rc.1"
+          "branch": "xml-parsing",
+          "revision": "6e182bc0e8cef1d5e3f7bd5b9a5a13ad2365f66a",
+          "version": null
         }
       },
       {
